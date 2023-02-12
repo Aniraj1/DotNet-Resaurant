@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MySql.Data.MySqlClient;
+using Microsoft.AspNetCore.Cors;
 
 namespace Apexrestaurant.Api
 {
@@ -27,10 +28,23 @@ namespace Apexrestaurant.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc(options => options.EnableEndpointRouting = false);//method 1(disable addmvc completely) --- for "Endpoint Routing does not support 'IApplicationBuilder.UseMvc(...)'". error 
-             //method 1(disable addmvc completely) --- for "Endpoint Routing does not support 'IApplicationBuilder.UseMvc(...)'". error 
-            RepositoryModule.Register(services,"Server=127.0.0.1;Database=ApexRestaurantDB;uid=root;pwd=password;",GetType().Assembly.FullName);
+                                                                              //method 1(disable addmvc completely) --- for "Endpoint Routing does not support 'IApplicationBuilder.UseMvc(...)'". error 
+            RepositoryModule.Register(services, "Server=127.0.0.1;Database=ApexRestaurantDB;uid=root;pwd=password;", GetType().Assembly.FullName);
             ServicesModule.Register(services);
             services.AddMvc();
+
+            //Cors header
+            services.AddCors(options =>
+                {
+                    options.AddPolicy("AllowAllOrigins",
+                        builder =>
+                        {
+                            builder.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                        });
+                });
+
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)//IHostingEnvironment is deprecated apparently so use IWebHostenvironment env 
@@ -43,6 +57,15 @@ namespace Apexrestaurant.Api
             //     endpoints.MapControllers();
             // });
             //Method 2 ---end 
+
+            app.UseCors(builder =>
+            {
+                builder.WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
